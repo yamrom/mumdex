@@ -1,4 +1,4 @@
-#! /bin/env python
+#! /usr/bin/env python
 
 # Copyright 2015 Peter Andrews @ CSHL
 
@@ -7,7 +7,7 @@ import mumdex
 import signal
 
 def handler(signum, frame):
-    print >> sys.stderr, "pipe closed in bridge_finder.py"
+    print("pipe closed in bridge_finder.py", file=sys.stderr)
     sys.exit(1)
 signal.signal(signal.SIGPIPE, handler)
 
@@ -19,8 +19,7 @@ if len(sys.argv) == 4:
     sample = sys.argv[2]
     whole_genome = bool(int(sys.argv[3]))
 else:
-    print >> sys.stderr, \
-        "usage: bridge_info.py pos.txt sample whole_genome"
+    print("usage: bridge_info.py pos.txt sample whole_genome", file=sys.stderr)
     exit(1)
 
 if whole_genome:
@@ -48,8 +47,8 @@ while True:
     pos = int(pos)
     out = bool(int(out))
     (anchor_counts, bridges) = mums.bridges(ref.index(chr), pos, out)
-    print [ chr, pos, out, n_samples, n_families, len(bridges),
-            anchor_counts, bridges ]
+    print([ chr, pos, out, n_samples, n_families, len(bridges),
+            anchor_counts, bridges ])
 
 
 exit()

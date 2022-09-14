@@ -1429,7 +1429,8 @@ class mumdex_names {
       names{pairs_name(name),
         mums_name(name),
         bases_name(name),
-        extra_name(name)} {}
+	  extra_name(name),
+	  index_name(name)} {}
   const std::string & operator[](const uint64_t i) const {
     return names[i];
   }
@@ -1634,6 +1635,7 @@ class TMUMdex_base {
     pairs_.save(names[0]);
     mums_.save(names[1]);
     bases_.save(names[2], names[3]);
+    index_.save(names[4]);
   }
   // rearrange according to pair sorting
   void rearrange(const TMUMdex_base & mumdex) {

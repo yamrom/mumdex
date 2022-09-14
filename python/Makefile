@@ -4,7 +4,7 @@ build :
 	python setup.py build
 
 install :
-	python setup.py install --user
+	python setup.py install
 
 install_26	:
 	rm -Rf build

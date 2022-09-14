@@ -53,7 +53,7 @@ import sys
 
 import numpy as np
 
-from _mumdex import Reference, Mappability, Counts, Population, MUMdex as _MUMdexC, MUM, Pair, Mapper
+from mumdex._mumdex import Reference, Mappability, Counts, Population, MUMdex as _MUMdexC, MUM, Pair, Mapper
 
 #
 # MUMdex
@@ -86,7 +86,7 @@ class MUMdex(_MUMdexC):
         return mums with lowest position base at given chrom and pos
         """
         mum_range = self.range(chrom, pos, chrom, pos + 1)
-        for i in xrange(mum_range[0], mum_range[1]):
+        for i in range(mum_range[0], mum_range[1]):
             yield self.index(i)
 
     # need to filter out mums touching ends of reads
@@ -99,7 +99,7 @@ class MUMdex(_MUMdexC):
         else:
             low_pos = 1
         mum_range = self.range(chrom, low_pos, chrom, pos)
-        for i in xrange(mum_range[0], mum_range[1]):
+        for i in range(mum_range[0], mum_range[1]):
             pm = self.index(i)
             mum = self.MUM(pm[1])
             if mum.position() + mum.length() - 1 == pos:
@@ -152,7 +152,7 @@ class MUMdex(_MUMdexC):
         ref = self.Reference()
         start_chrom_index = ref.index(start_chrom)
         stop_chrom_index = ref.index(stop_chrom)
-        for i in xrange(mum_range[0], mum_range[1]):
+        for i in range(mum_range[0], mum_range[1]):
             pm = self.index(i)
             mum = self.MUM(pm[1])
             if start_chrom_index == mum.chromosome():
@@ -168,7 +168,7 @@ class MUMdex(_MUMdexC):
         """
         return the index of the first mum on read 2 for a Pair
         """
-        for index in xrange(pair.mums_start(), pair.mums_stop()):
+        for index in range(pair.mums_start(), pair.mums_stop()):
             if self.MUM(index).read_2():
                 return index
         return pair.mums_stop()
@@ -183,14 +183,14 @@ class MUMdex(_MUMdexC):
         higher_index = bool(is_high) != mum.flipped()
         if higher_index:
             if mum.read_2():
-                return xrange(mum_index + 1, pair.mums_stop())
+                return range(mum_index + 1, pair.mums_stop())
             else:
-                return xrange(mum_index + 1, read_2_mum_index)
+                return range(mum_index + 1, read_2_mum_index)
         else:
             if mum.read_2():
-                return xrange(mum_index - 1, read_2_mum_index - 1, -1)
+                return range(mum_index - 1, read_2_mum_index - 1, -1)
             else:
-                return xrange(mum_index - 1, pair.mums_start() - 1, -1)
+                return range(mum_index - 1, pair.mums_start() - 1, -1)
 
     def adjacent_mums_on_mate(self, pair_mum, is_high, read_2_mum_index):
         """
@@ -203,10 +203,10 @@ class MUMdex(_MUMdexC):
         anchor_is_in_mate_direction = bool(is_high) != mum.flipped()
         if anchor_is_in_mate_direction:
             if mum.read_2():
-                return xrange(read_2_mum_index - 1, pair.mums_start() - 1, -1)
+                return range(read_2_mum_index - 1, pair.mums_start() - 1, -1)
             else:
-                return xrange(pair.mums_stop() - 1, read_2_mum_index - 1, -1)
-        return xrange(0, 0)
+                return range(pair.mums_stop() - 1, read_2_mum_index - 1, -1)
+        return range(0, 0)
             
 
 
@@ -571,11 +571,10 @@ class PopulationCounts():
         chr = start_chr
         chr_index = ref.index(chr)
         abspos_offset = ref.offset(chr_index)
-        for s in xrange(0, n_samples):
+        for s in range(0, n_samples):
             if verbose:
-                print >> sys.stderr, \
-                    "\rReading", s + 1, "of", n_samples, "samples for", \
-                    n_loci, "loci",
+                print("\rReading", s + 1, "of", n_samples, "samples for", \
+                    n_loci, "loci", end=' ', file=sys.stderr)
                 sys.stdout.flush()
             samples[s] = tuple(
                 [pop.family(pop.sample_family(s)), pop.n_members(s),
@@ -584,7 +583,7 @@ class PopulationCounts():
             sample_counts = Counts(bed_file, counts_dir)
             sample_counts.load_position(start_chr, start_pos)
             last_chr = ""
-            for n in xrange(0, n_loci):
+            for n in range(0, n_loci):
                 if span_chromosomes:
                     chr = sample_counts.chromosome();
                     if last_chr != chr:
@@ -598,7 +597,7 @@ class PopulationCounts():
                                     ref.base_index(chr_index, pos),
                                     mapp.low_map(abspos),
                                     mapp.high_map(abspos))    
-                for o in xrange(0, 2):
+                for o in range(0, 2):
                     refs[o][s][n] = sample_counts.reference(o)
                     anchors[o][s][n] = sample_counts.anchor(o)
                     coverage = float(sample_counts.reference(o)) + \
@@ -613,14 +612,14 @@ class PopulationCounts():
                     next_chr = sample_counts.chromosome()
                     next_pos = sample_counts.position()
 
-        for o in xrange(0, 2):
-            for s in xrange(0, n_samples):
+        for o in range(0, 2):
+            for s in range(0, n_samples):
                 sample_coverage[o][s] /= n_loci
-            for n in xrange(0, n_loci):
+            for n in range(0, n_loci):
                 position_coverage[o][n] /= n_samples
 
         if verbose:
-            print >> sys.stderr
+            print(file=sys.stderr)
 
         self.samples = samples
         self.positions = positions
@@ -661,22 +660,22 @@ class PopulationCounts():
             n_loci = positions.size - start_locus
 
         # print specified data
-        print "samples"
-        for n in xrange(start_sample, start_sample + n_samples):
-            print samples[n]
+        print("samples")
+        for n in range(start_sample, start_sample + n_samples):
+            print(samples[n])
 
-        print "positions"
-        for n in xrange(start_locus, start_locus + n_loci):
-            print positions[n]
+        print("positions")
+        for n in range(start_locus, start_locus + n_loci):
+            print(positions[n])
 
         def print_array(name, array):
-            print name
-            for out in xrange(0, 2):
-                for x in xrange(start_sample, start_sample + n_samples):
-                    print out, ":",
-                    for y in xrange(start_locus, start_locus + n_loci):
-                        print array[out, x, y],
-                    print
+            print(name)
+            for out in range(0, 2):
+                for x in range(start_sample, start_sample + n_samples):
+                    print(out, ":", end=' ')
+                    for y in range(start_locus, start_locus + n_loci):
+                        print(array[out, x, y], end=' ')
+                    print()
 
         print_array("refs", refs)
         print_array("anchors", anchors)
@@ -718,8 +717,8 @@ class PopulationCounts():
         prints reference, anchor data
         """
         f = open(file_name, "w")
-        for x in xrange(0, self.samples.size):
-            for y in xrange(0, self.loci.size):
+        for x in range(0, self.samples.size):
+            for y in range(0, self.loci.size):
                 f.write(str(array[out, x, y]))
                 f.write(' ')
             f.write('\n')
@@ -785,7 +784,7 @@ class PopulationCountsIterator():
     def __iter__(self):
         return self;
 
-    def next(self):
+    def __next__(self):
         """
         return a PopulationCounts object for the next region
         """

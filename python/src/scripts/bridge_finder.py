@@ -1,4 +1,4 @@
-#! /bin/env python
+#! /usr/bin/env python
 
 # Copyright 2015 Peter Andrews @ CSHL
 
@@ -7,7 +7,7 @@ import mumdex
 import signal
 
 def handler(signum, frame):
-    print >> sys.stderr, "pipe closed in bridge_finder.py"
+    print("pipe closed in bridge_finder.py", file=sys.stderr)
     sys.exit(1)
 signal.signal(signal.SIGPIPE, handler)
 
@@ -21,7 +21,7 @@ min_length = 40
 
 if len(sys.argv) == 1:
     # select a random sample
-    import ramdom
+    import random
     import os
     random.seed(os.urandom(4))
     pop = mumdex.Population(mums_dir + "/wg-families.txt")
@@ -43,7 +43,7 @@ if len(sys.argv) == 1:
             break
         position = random_abspos - ref.offset(chrom_index)
         chrom = ref.name(chrom_index)
-    print "selected start", sample, chrom, position
+    print("selected start", sample, chrom, position)
     whole_genome = True
 elif len(sys.argv) == 5:
     whole_genome = bool(int(sys.argv[1]))
@@ -51,8 +51,7 @@ elif len(sys.argv) == 5:
     chrom = sys.argv[3]
     position = int(sys.argv[4])
 else:
-    print >> sys.stderr, \
-        "usage: bridge_finder.py [whole_genome sample chromosome position]"
+    print("usage: bridge_finder.py [whole_genome sample chromosome position]", file=sys.stderr)
     exit(1)
 
 if whole_genome:
@@ -70,15 +69,15 @@ counts = mumdex.Counts(bed_file, counts_dir);
 counts.load_position(chrom, position)
 
 # loop over loci looking for good anchor and bridge counts and lengths
-for n in xrange(1, n_loci):
+for n in range(1, n_loci):
     for out in range(0, 2):
         if counts.anchor(out) > min_count and \
                 counts.max_support(out) > min_length:
             (anchor_counts, bridges) = mums.bridges(
                 ref.index(counts.chromosome()), counts.position(), out)
             bridges = sorted(
-                bridges.items(),
-                key=lambda x: -x[1]["abc"] * min(x[1]["as"], x[1]["bs"])))
+                list(bridges.items()),
+                key=lambda x: -x[1]["abc"] * min(x[1]["as"], x[1]["bs"]))
 
             bridge_text = list()
             for (invariant, bridge_counts) in bridges:
@@ -93,17 +92,17 @@ for n in xrange(1, n_loci):
                          "b {bc} {bl} s {bsc} {bs} m {bmc} {bms}").format(
                             **bridge_counts))
             if len(bridge_text) > 0:
-                print mumdex.counts_string(counts), out,
-                print "a {ac} {al} s {asc} {as} m {amc} {ams} b {bc} {bl}" \
-                    .format(**anchor_counts),
-                print " ".join(bridge_text)
+                print(mumdex.counts_string(counts), out, end=' ')
+                print("a {ac} {al} s {asc} {as} m {amc} {ams} b {bc} {bl}" \
+                    .format(**anchor_counts), end=' ')
+                print(" ".join(bridge_text))
                 sys.stdout.flush()
     if counts.more():
         counts.load_next()        
     else:
         break
 
-print sample, chrom, "done"
+print(sample, chrom, "done")
 
 exit()
 

@@ -1,0 +1,17 @@
+Metadata-Version: 2.1
+Name: mumdex
+Version: 0.1.0
+Summary: "python interface to mumdex package"
+Home-page: "http://mumdex.com"
+Author: "Peter Andrews @ CSHL"
+Author-email: "paa@drpa.us"
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: Linux
+Requires: numpy
+Requires: sys
+Requires: os
+Requires-Python: >=3.6
+License-File: LICENSE
+
+MUMdex python module

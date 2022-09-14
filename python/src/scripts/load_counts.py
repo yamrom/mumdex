@@ -1,4 +1,4 @@
-#! /bin/env python
+#! /usr/bin/env python
 
 import sys
 import mumdex
@@ -13,11 +13,11 @@ for pop_counts in mumdex.PopulationCountsIterator(
     refs = pop_counts.refs
     anchors = pop_counts.anchors
     
-    print "samples:\n", samples
-    print "\npositions:\n", positions
-    print "\nrefs:\n", refs
-    print "\nanchors:\n", anchors
-    print
+    print("samples:\n", samples)
+    print("\npositions:\n", positions)
+    print("\nrefs:\n", refs)
+    print("\nanchors:\n", anchors)
+    print()
 
     n -= 1
     if n == 0:

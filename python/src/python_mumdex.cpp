@@ -7,7 +7,7 @@
 //
 // Copyright 2015 Peter Andrews @ CSHL
 //
-
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #include <string>
@@ -33,7 +33,7 @@ struct ReadPair {
 };
 
 static void pair_dealloc(ReadPair * self) {
-  self->ob_type->tp_free(reinterpret_cast<PyObject *>(self));
+  Py_TYPE(self)->tp_free(reinterpret_cast<PyVarObject *>(self));
 }
 
 static PyObject * pair_mums_start(ReadPair * self) {
@@ -48,10 +48,10 @@ static PyObject * pair_n_mums(ReadPair * self) {
 }
 
 static PyObject * pair_read_1_length(ReadPair * self) {
-  return PyInt_FromLong(self->data->read_1_length());
+  return PyLong_FromLong(self->data->read_1_length());
 }
 static PyObject * pair_read_2_length(ReadPair * self) {
-  return PyInt_FromLong(self->data->read_2_length());
+  return PyLong_FromLong(self->data->read_2_length());
 }
 
 static PyObject * pair_read_1_bad(ReadPair * self) {
@@ -70,17 +70,17 @@ static PyObject * pair_dupe(ReadPair * self) {
 }
 
 static PyObject * pair_length(ReadPair * self, PyObject * read_index) {
-  return PyInt_FromLong(self->data->length(
-      static_cast<unsigned int>(PyInt_AS_LONG(read_index))));
+  return PyLong_FromLong(self->data->length(
+      static_cast<unsigned int>(PyLong_AS_LONG(read_index))));
 }
 
 static PyObject * pair_bad(ReadPair * self, PyObject * read_index) {
   return PyBool_FromLong(self->data->bad(
-      static_cast<unsigned int>(PyInt_AS_LONG(read_index))));
+      static_cast<unsigned int>(PyLong_AS_LONG(read_index))));
 }
 
 static PyObject * pair_repr(ReadPair * self) {
-  return PyString_FromFormat("%u %u %u %u %u %u %lu %lu",
+  return PyUnicode_FromFormat("%u %u %u %u %u %u %lu %lu",
                              self->data->dupe(),
                              self->data->has_mums(),
                              self->data->length(0),
@@ -153,14 +153,26 @@ WARNING: Pair objects become unusable if the MUMdex
          object that created them are destroyed!
 )STR";
 
+/*
 static PyTypeObject pairType = {
-  PyObject_HEAD_INIT(nullptr)
-  0,                                        /* ob_size */
+  PyVarObject_HEAD_INIT(nullptr,0)
+  .tp_name = "mumdex.Pair",
+  .tp_basicsize = sizeof(ReadPair),
+  .tp_dealloc = (destructor)pair_dealloc,
+  .tp_repr = (reprfunc)pair_repr,
+  .tp_flags = Py_TPFLAGS_DEFAULT,
+  .tp_doc = pair_doc,
+  .tp_methods = pair_methods,
+};
+*/
+
+static PyTypeObject pairType = {
+  PyVarObject_HEAD_INIT(nullptr,0)
   "mumdex.Pair",                            /* tp_name */
-  sizeof(ReadPair),                             /* tp_basicsize */
+  sizeof(ReadPair),                         /* tp_basicsize */
   0,                                        /* tp_itemsize */
   (destructor)pair_dealloc,                 /* tp_dealloc */
-  nullptr,                                  /* tp_print */
+  0,                                        /* tp_vectorcall_offset */
   nullptr,                                  /* tp_getattr */
   nullptr,                                  /* tp_setattr */
   nullptr,                                  /* tp_compare */
@@ -202,6 +214,8 @@ static PyTypeObject pairType = {
   nullptr,                                  /* tp_weaklist */
   nullptr,                                  /* tp_del */
   0,                                        /* tp_version_tag */
+  nullptr,                                  /* tp_finalize */
+  nullptr,                                  /* tp_vectorcall */
 };
 
 //
@@ -214,23 +228,23 @@ struct Mum {
 };
 
 static void mum_dealloc(Mum * self) {
-  self->ob_type->tp_free(reinterpret_cast<PyObject *>(self));
+  Py_TYPE(self)->tp_free(reinterpret_cast<PyVarObject *>(self));
 }
 
 static PyObject * mum_chromosome(Mum * self) {
-  return PyInt_FromLong(self->data->chromosome());
+  return PyLong_FromLong(self->data->chromosome());
 }
 
 static PyObject * mum_position(Mum * self) {
-  return PyInt_FromLong(self->data->position1());
+  return PyLong_FromLong(self->data->position1());
 }
 
 static PyObject * mum_offset(Mum * self) {
-  return PyInt_FromLong(self->data->offset());
+  return PyLong_FromLong(self->data->offset());
 }
 
 static PyObject * mum_length(Mum * self) {
-  return PyInt_FromLong(self->data->length());
+  return PyLong_FromLong(self->data->length());
 }
 
 static PyObject * mum_flipped(Mum * self) {
@@ -250,7 +264,7 @@ static PyObject * mum_touches_end(Mum * self) {
 }
 
 static PyObject * mum_repr(Mum * self) {
-  return PyString_FromFormat("%u %u %u %u %u %u %u %u",
+  return PyUnicode_FromFormat("%u %u %u %u %u %u %u %u",
                              self->data->chromosome(),
                              self->data->position1(),
                              self->data->offset(),
@@ -312,13 +326,12 @@ WARNING: MUM objects become unusable if the MUMdex
 )STR";
 
 static PyTypeObject mumType = {
-  PyObject_HEAD_INIT(nullptr)
-  0,                                        /* ob_size */
+  PyVarObject_HEAD_INIT(nullptr,0)
   "mumdex.MUM",                             /* tp_name */
   sizeof(Mum),                              /* tp_basicsize */
   0,                                        /* tp_itemsize */
   (destructor)mum_dealloc,                  /* tp_dealloc */
-  nullptr,                                  /* tp_print */
+  0,                                        /* tp_vectorcall_offset */
   nullptr,                                  /* tp_getattr */
   nullptr,                                  /* tp_setattr */
   nullptr,                                  /* tp_compare */
@@ -360,6 +373,8 @@ static PyTypeObject mumType = {
   nullptr,                                  /* tp_weaklist */
   nullptr,                                  /* tp_del */
   0,                                        /* tp_version_tag */
+  nullptr,                                  /* tp_finalize */
+  nullptr,                                  /* tp_vectorcall */  
 };
 
 //
@@ -382,7 +397,7 @@ static void reference_dealloc(Reference * self) {
   Py_DECREF(self->fasta);
   if (self->data != nullptr && self->own_data) delete self->data;
   if (self->lookup != nullptr) delete self->lookup;
-  self->ob_type->tp_free(reinterpret_cast<PyObject *>(self));
+  Py_TYPE(self)->tp_free(reinterpret_cast<PyObject *>(self));
 }
 
 static PyObject * reference_fasta(Reference * self) {
@@ -391,17 +406,17 @@ static PyObject * reference_fasta(Reference * self) {
 }
 
 static PyObject * reference_size(Reference * self) {
-  return PyInt_FromLong(self->data->size());
+  return PyLong_FromLong(self->data->size());
 }
 
 static PyObject * reference_n_chromosomes(Reference * self) {
-  return PyInt_FromLong(self->data->n_chromosomes());
+  return PyLong_FromLong(self->data->n_chromosomes());
 }
 
 static PyObject * reference_index(Reference * self,
                                   PyObject * chromosome_name) {
   try {
-    return PyLong_FromLong((*self->lookup)[PyString_AsString(chromosome_name)]);
+    return PyLong_FromLong((*self->lookup)[PyUnicode_AsUTF8(chromosome_name)]);
   } catch (std::exception & e) {
     PyErr_SetString(PyExc_RuntimeError,
                     (std::string("mumdex.reference.index(): ") +
@@ -413,7 +428,7 @@ static PyObject * reference_index(Reference * self,
 static PyObject * reference_name(Reference * self,
                                  PyObject * chromosome_index) {
   const auto index = PyLong_AsLong(chromosome_index);
-  return PyString_FromString(self->data->name(index).c_str());
+  return PyUnicode_FromString(self->data->name(index).c_str());
 }
 
 static PyObject * reference_offset(Reference * self,
@@ -425,7 +440,7 @@ static PyObject * reference_offset(Reference * self,
 static PyObject * reference_length(Reference * self,
                                    PyObject * chromosome_index) {
   const auto index = PyLong_AsLong(chromosome_index);
-  return PyInt_FromLong(self->data->size(index));
+  return PyLong_FromLong(self->data->size(index));
 }
 
 static PyObject * reference_base(Reference * self, PyObject * args) {
@@ -439,7 +454,7 @@ static PyObject * reference_base(Reference * self, PyObject * args) {
   try {
     const auto chromosome_index = (*self->lookup)[chromosome];
     const auto & ref = *self->data;
-    return PyString_FromFormat("%c", ref[chromosome_index][position]);
+    return PyUnicode_FromFormat("%c", ref[chromosome_index][position]);
   } catch (std::exception & e) {
     PyErr_SetString(PyExc_RuntimeError,
                     (std::string("mumdex.reference.base(): ") +
@@ -457,12 +472,12 @@ static PyObject * reference_base_index(Reference * self, PyObject * args) {
   --position;  // make zero-based
 
   const auto & ref = *self->data;
-  return PyString_FromFormat("%c", ref[chromosome][position]);
+  return PyUnicode_FromFormat("%c", ref[chromosome][position]);
 }
 
 static PyObject * reference_repr(Reference * self) {
-  return PyString_FromFormat("Reference object loaded from %s",
-                             PyString_AsString(self->fasta));
+  return PyUnicode_FromFormat("Reference object loaded from %s",
+                             PyUnicode_AsUTF8(self->fasta));
 }
 
 static PyMethodDef reference_methods[] = {
@@ -528,13 +543,12 @@ Constructors:
 )STR";
 
 static PyTypeObject referenceType = {
-  PyObject_HEAD_INIT(nullptr)
-  0,                                        /* ob_size */
+  PyVarObject_HEAD_INIT(nullptr,0)
   "mumdex.Reference",                       /* tp_name */
   sizeof(Reference),                        /* tp_basicsize */
   0,                                        /* tp_itemsize */
   (destructor)reference_dealloc,            /* tp_dealloc */
-  nullptr,                                  /* tp_print */
+  0,                                        /* tp_vectorcall_offset */  
   nullptr,                                  /* tp_getattr */
   nullptr,                                  /* tp_setattr */
   nullptr,                                  /* tp_compare */
@@ -576,6 +590,8 @@ static PyTypeObject referenceType = {
   nullptr,                                  /* tp_weaklist */
   nullptr,                                  /* tp_del */
   0,                                        /* tp_version_tag */
+  nullptr,                                  /* tp_finalize */
+  nullptr,                                  /* tp_vectorcall */
 };
 
 //
@@ -607,9 +623,9 @@ static PyObject * mumdex_new(PyTypeObject * type, PyObject * args,
     Py_INCREF(directory);
     self->directory = directory;
     try {
-      self->data = new paa::MUMdex(PyString_AsString(directory));
+      self->data = new paa::MUMdex(PyUnicode_AsUTF8(directory));
     } catch (std::exception & e) {
-      self->ob_type->tp_free(reinterpret_cast<PyObject *>(self));
+      Py_TYPE(self)->tp_free(reinterpret_cast<PyObject *>(self));
       PyErr_SetString(PyExc_RuntimeError,
                       (std::string("mumdex.MUMdex.new(): ") +
                        e.what()).c_str());
@@ -623,17 +639,17 @@ static PyObject * mumdex_new(PyTypeObject * type, PyObject * args,
       Py_DECREF(ref_args);
       if (self->reference == nullptr) return nullptr;
     } catch (std::exception & e) {
-      self->ob_type->tp_free(reinterpret_cast<PyObject *>(self));
+      Py_TYPE(self)->tp_free(reinterpret_cast<PyObject *>(self));
       PyErr_SetString(PyExc_RuntimeError,
                       (std::string("mumdex.MUMdex.new() Reference: ")
                        + e.what()).c_str());
       return nullptr;
     }
     try {
-      self->savers = new paa::OptionalSavers(PyString_AsString(directory),
+      self->savers = new paa::OptionalSavers(PyUnicode_AsUTF8(directory),
                                              self->data->n_pairs());
     } catch (std::exception & e) {
-      self->ob_type->tp_free(reinterpret_cast<PyObject *>(self));
+      Py_TYPE(self)->tp_free(reinterpret_cast<PyObject *>(self));
       PyErr_SetString(PyExc_RuntimeError,
                       (std::string("mumdex.MUMdex.new() OptionalSavers: ")
                        + e.what()).c_str());
@@ -649,7 +665,7 @@ static void mumdex_dealloc(MUMdex * self) {
   Py_DECREF(self->reference);
   if (self->data != nullptr) delete self->data;
   if (self->savers != nullptr) delete self->savers;
-  self->ob_type->tp_free(reinterpret_cast<PyObject *>(self));
+  Py_TYPE(self)->tp_free(reinterpret_cast<PyObject *>(self));
 }
 
 static PyObject * mumdex_directory(MUMdex * self) {
@@ -785,7 +801,7 @@ static PyObject * mumdex_range_str(MUMdex * self, PyObject * region_string) {
   try {
     const auto & mumdex = *self->data;
     const auto & lookup = *self->reference->lookup;
-    const auto region = mumdex.region(PyString_AS_STRING(
+    const auto region = mumdex.region(PyUnicode_AsUTF8(
         region_string), lookup);
     const auto origin = self->data->index().begin();
     return Py_BuildValue("kk", region.begin() - origin,
@@ -822,7 +838,7 @@ static PyObject * mumdex_sequences(MUMdex * self, PyObject * pair_index) {
 
 static PyObject * mumdex_pair_view(MUMdex * self, PyObject * pair_index) {
   const auto index = PyLong_AsLong(pair_index);
-  return PyString_FromString(self->data->pair_view(index).c_str());
+  return PyUnicode_FromString(self->data->pair_view(index).c_str());
 }
 
 static PyObject * mumdex_reference(MUMdex * self) {
@@ -837,7 +853,7 @@ static PyObject * mumdex_optional_size(MUMdex * self) {
 static PyObject * mumdex_optional_name(MUMdex * self,
                                        PyObject * optional_index) {
   const auto index = PyLong_AsLong(optional_index);
-  return PyString_FromString((*self->savers)[index].name().c_str());
+  return PyUnicode_FromString((*self->savers)[index].name().c_str());
 }
 
 static PyObject * mumdex_optional(MUMdex * self, PyObject * args) {
@@ -848,7 +864,7 @@ static PyObject * mumdex_optional(MUMdex * self, PyObject * args) {
                         &index, &pair, &read))
     return nullptr;
   try {
-    return PyString_FromString(
+    return PyUnicode_FromString(
         (*self->savers)[index].clip(pair * 2 + read).c_str());
   } catch (std::exception & e) {
     PyErr_SetString(PyExc_RuntimeError,
@@ -859,8 +875,8 @@ static PyObject * mumdex_optional(MUMdex * self, PyObject * args) {
 }
 
 static PyObject * mumdex_repr(MUMdex * self) {
-  return PyString_FromFormat("MUMdex object loaded from %s",
-                             PyString_AsString(self->directory));
+  return PyUnicode_FromFormat("MUMdex object loaded from %s",
+                             PyUnicode_AsUTF8(self->directory));
 }
 
 static PyMethodDef mumdex_methods[] = {
@@ -953,13 +969,12 @@ static PyMethodDef mumdex_methods[] = {
 };
 
 static PyTypeObject mumdexType = {
-  PyObject_HEAD_INIT(nullptr)
-  0,                                        /* ob_size */
+  PyVarObject_HEAD_INIT(nullptr,0)
   "mumdex.MUMdex",                         /* tp_name */
   sizeof(MUMdex),                           /* tp_basicsize */
   0,                                        /* tp_itemsize */
   (destructor)mumdex_dealloc,               /* tp_dealloc */
-  nullptr,                                  /* tp_print */
+  0,                                        /* tp_vectorcall_offset */
   nullptr,                                  /* tp_getattr */
   nullptr,                                  /* tp_setattr */
   nullptr,                                  /* tp_compare */
@@ -1001,6 +1016,8 @@ static PyTypeObject mumdexType = {
   nullptr,                                  /* tp_weaklist */
   nullptr,                                  /* tp_del */
   0,                                        /* tp_version_tag */
+  nullptr,                                  /* tp_finalize */
+  nullptr,                                  /* tp_vectorcall */
 };
 
 //
@@ -1042,7 +1059,7 @@ static PyObject * counts_new(PyTypeObject * type, PyObject * args,
   Counts * self = reinterpret_cast<Counts *>(type->tp_alloc(type, 0));
   if (self != nullptr) {
     // Set object fields
-    self->directory = PyString_FromString(counts_dir);
+    self->directory = PyUnicode_FromString(counts_dir);
     try {
       self->data = new paa::AnchorCounts(bed_file, counts_dir);
     } catch (std::exception & e) {
@@ -1059,7 +1076,7 @@ static PyObject * counts_new(PyTypeObject * type, PyObject * args,
 static void counts_dealloc(Counts * self) {
   Py_DECREF(self->directory);
   if (self->data != nullptr) delete self->data;
-  self->ob_type->tp_free(reinterpret_cast<PyObject *>(self));
+  Py_TYPE(self)->tp_free(reinterpret_cast<PyObject *>(self));
 }
 
 static PyObject * counts_directory(Counts * self) {
@@ -1089,7 +1106,7 @@ static PyObject * counts_load_bed_line(Counts * self, PyObject * index) {
 }
 
 static PyObject * counts_positions_to_next_chromosome(Counts * self) {
-  return PyInt_FromLong(self->data->bed().positions_to_next_chromosome(
+  return PyLong_FromLong(self->data->bed().positions_to_next_chromosome(
       self->data->bed_line(), self->data->position0()));
 }
 static PyObject * counts_positions_to_genome_end(Counts * self) {
@@ -1111,35 +1128,35 @@ static PyObject * counts_load_next(Counts * self) {
 }
 
 static PyObject * counts_chromosome(Counts * self) {
-  return PyString_FromString(self->data->chromosome().c_str());
+  return PyUnicode_FromString(self->data->chromosome().c_str());
 }
 static PyObject * counts_position(Counts * self) {
-  return PyInt_FromLong(self->data->position1());
+  return PyLong_FromLong(self->data->position1());
 }
 
 static PyObject * counts_reference(Counts * self, PyObject * high) {
-  return PyInt_FromLong(self->data->current().reference[PyInt_AsLong(high)]);
+  return PyLong_FromLong(self->data->current().reference[PyLong_AsLong(high)]);
 }
 static PyObject * counts_low_reference(Counts * self) {
-  return PyInt_FromLong(self->data->current().reference[0]);
+  return PyLong_FromLong(self->data->current().reference[0]);
 }
 static PyObject * counts_high_reference(Counts * self) {
-  return PyInt_FromLong(self->data->current().reference[1]);
+  return PyLong_FromLong(self->data->current().reference[1]);
 }
 
 static PyObject * counts_anchor(Counts * self, PyObject * high) {
-  return PyInt_FromLong(self->data->current().anchor[PyInt_AsLong(high)]);
+  return PyLong_FromLong(self->data->current().anchor[PyLong_AsLong(high)]);
 }
 static PyObject * counts_low_anchor(Counts * self) {
-  return PyInt_FromLong(self->data->current().anchor[0]);
+  return PyLong_FromLong(self->data->current().anchor[0]);
 }
 static PyObject * counts_high_anchor(Counts * self) {
-  return PyInt_FromLong(self->data->current().anchor[1]);
+  return PyLong_FromLong(self->data->current().anchor[1]);
 }
 
 static PyObject * counts_repr(Counts * self) {
-  return PyString_FromFormat("Counts object loaded from %s",
-                             PyString_AsString(self->directory));
+  return PyUnicode_FromFormat("Counts object loaded from %s",
+                             PyUnicode_AsUTF8(self->directory));
 }
 
 static PyMethodDef counts_methods[] = {
@@ -1241,13 +1258,12 @@ Constructor:
 )STR";
 
 static PyTypeObject countsType = {
-  PyObject_HEAD_INIT(nullptr)
-  0,                                        /* ob_size */
+  PyVarObject_HEAD_INIT(nullptr,0)
   "mumdex.Counts",                          /* tp_name */
   sizeof(Counts),                           /* tp_basicsize */
   0,                                        /* tp_itemsize */
   (destructor)counts_dealloc,               /* tp_dealloc */
-  nullptr,                                  /* tp_print */
+  0,                                        /* tp_vectorcall_offset */
   nullptr,                                  /* tp_getattr */
   nullptr,                                  /* tp_setattr */
   nullptr,                                  /* tp_compare */
@@ -1289,6 +1305,8 @@ static PyTypeObject countsType = {
   nullptr,                                  /* tp_weaklist */
   nullptr,                                  /* tp_del */
   0,                                        /* tp_version_tag */
+  nullptr,                                  /* tp_finalize */
+  nullptr,                                  /* tp_vectorcall */
 };
 
 //
@@ -1316,7 +1334,7 @@ static PyObject * population_new(PyTypeObject * type, PyObject * args,
   Population * self = reinterpret_cast<Population *>(type->tp_alloc(type, 0));
   if (self != nullptr) {
     // Set object fields
-    self->population_file = PyString_FromString(population_file);
+    self->population_file = PyUnicode_FromString(population_file);
 
     try {
       self->data = new paa::Population(population_file);
@@ -1334,7 +1352,7 @@ static PyObject * population_new(PyTypeObject * type, PyObject * args,
 static void population_dealloc(Population * self) {
   Py_DECREF(self->population_file);
   if (self->data != nullptr) delete self->data;
-  self->ob_type->tp_free(reinterpret_cast<PyObject *>(self));
+  Py_TYPE(self)->tp_free(reinterpret_cast<PyObject *>(self));
 }
 
 static PyObject * population_file(Population * self) {
@@ -1343,51 +1361,51 @@ static PyObject * population_file(Population * self) {
 }
 
 static PyObject * population_n_families(Population * self) {
-  return PyInt_FromLong(self->data->n_families());
+  return PyLong_FromLong(self->data->n_families());
 }
 
 static PyObject * population_family(Population * self,
                                     PyObject * family_index) {
-  return PyString_FromString(self->data->family(
+  return PyUnicode_FromString(self->data->family(
       paa::Population::Family{PyLong_AsUnsignedLong(family_index)}).c_str());
 }
 
 static PyObject * population_n_members(Population * self,
                                        PyObject * family_index) {
-  return PyInt_FromLong(self->data->n_members(
+  return PyLong_FromLong(self->data->n_members(
       paa::Population::Family{PyLong_AsUnsignedLong(family_index)}));
 }
 
 static PyObject * population_samples_start(Population * self,
                                            PyObject * family_index) {
-  return PyInt_FromLong(self->data->samples(
+  return PyLong_FromLong(self->data->samples(
       paa::Population::Family{PyLong_AsUnsignedLong(family_index)}).front());
 }
 
 static PyObject * population_n_samples(Population * self) {
-  return PyInt_FromLong(self->data->n_samples());
+  return PyLong_FromLong(self->data->n_samples());
 }
 
 static PyObject * population_member(Population * self,
                                     PyObject * sample_index) {
-  return PyString_FromString(self->data->member(
+  return PyUnicode_FromString(self->data->member(
       paa::Population::Sample{PyLong_AsUnsignedLong(sample_index)}).c_str());
 }
 
 static PyObject * population_sample(Population * self,
                                     PyObject * sample_index) {
-  return PyString_FromString(self->data->sample(
+  return PyUnicode_FromString(self->data->sample(
       paa::Population::Sample{PyLong_AsUnsignedLong(sample_index)}).c_str());
 }
 
 static PyObject * population_sample_family(Population * self,
                                     PyObject * sample_index) {
-  return PyInt_FromLong(self->data->family(
+  return PyLong_FromLong(self->data->family(
       paa::Population::Sample{PyLong_AsUnsignedLong(sample_index)}));
 }
 
 static PyObject * population_sex(Population * self, PyObject * sample_index) {
-  return PyString_FromString(self->data->sex(
+  return PyUnicode_FromString(self->data->sex(
       paa::Population::Sample{PyLong_AsUnsignedLong(sample_index)}).c_str());
 }
 
@@ -1398,13 +1416,13 @@ static PyObject * population_mumdex_name(Population * self,
   if (!PyArg_ParseTuple(args, "sI:population mumdex_name",
                         &samples_dir, &sample))
     return nullptr;
-  return PyString_FromString(self->data->mumdex_name(
+  return PyUnicode_FromString(self->data->mumdex_name(
       samples_dir, paa::Population::Sample{sample}).c_str());
 }
 
 static PyObject * population_repr(Population * self) {
-  return PyString_FromFormat("Population object loaded from %s",
-                             PyString_AsString(self->population_file));
+  return PyUnicode_FromFormat("Population object loaded from %s",
+                             PyUnicode_AsUTF8(self->population_file));
 }
 
 static PyMethodDef population_methods[] = {
@@ -1481,13 +1499,12 @@ Constructor:
 )STR";
 
 static PyTypeObject populationType = {
-  PyObject_HEAD_INIT(nullptr)
-  0,                                        /* ob_size */
+  PyVarObject_HEAD_INIT(nullptr,0)
   "mumdex.Population",                      /* tp_name */
   sizeof(Population),                       /* tp_basicsize */
   0,                                        /* tp_itemsize */
   (destructor)population_dealloc,           /* tp_dealloc */
-  nullptr,                                  /* tp_print */
+  0,                                        /* tp_vectorcall_offset */
   nullptr,                                  /* tp_getattr */
   nullptr,                                  /* tp_setattr */
   nullptr,                                  /* tp_compare */
@@ -1529,6 +1546,8 @@ static PyTypeObject populationType = {
   nullptr,                                  /* tp_weaklist */
   nullptr,                                  /* tp_del */
   0,                                        /* tp_version_tag */
+  nullptr,                                  /* tp_finalize */
+  nullptr,                                  /* tp_vectorcall */
 };
 
 //
@@ -1556,7 +1575,7 @@ static PyObject * mappability_new(PyTypeObject * type, PyObject * args,
   Mappability * self = reinterpret_cast<Mappability *>(type->tp_alloc(type, 0));
   if (self != nullptr) {
     // Set object fields
-    self->fasta_file = PyString_FromString(fasta_file);
+    self->fasta_file = PyUnicode_FromString(fasta_file);
     try {
       self->data = new paa::Mappability(fasta_file, true);
     } catch (std::exception & e) {
@@ -1573,7 +1592,7 @@ static PyObject * mappability_new(PyTypeObject * type, PyObject * args,
 static void mappability_dealloc(Mappability * self) {
   Py_DECREF(self->fasta_file);
   if (self->data != nullptr) delete self->data;
-  self->ob_type->tp_free(reinterpret_cast<PyObject *>(self));
+  Py_TYPE(self)->tp_free(reinterpret_cast<PyObject *>(self));
 }
 
 static PyObject * mappability_fasta(Mappability * self) {
@@ -1582,26 +1601,26 @@ static PyObject * mappability_fasta(Mappability * self) {
 }
 
 static PyObject * mappability_size(Mappability * self) {
-  return PyInt_FromLong(self->data->size());
+  return PyLong_FromLong(self->data->size());
 }
 
 static PyObject * mappability_low_map(Mappability * self, PyObject * abspos) {
-  return PyInt_FromLong(self->data->low(PyLong_AsLong(abspos) - 1));
+  return PyLong_FromLong(self->data->low(PyLong_AsLong(abspos) - 1));
 }
 static PyObject * mappability_high_map(Mappability * self, PyObject * abspos) {
-  return PyInt_FromLong(self->data->high(PyLong_AsLong(abspos) - 1));
+  return PyLong_FromLong(self->data->high(PyLong_AsLong(abspos) - 1));
 }
 static PyObject * mappability_low_high(Mappability * self, PyObject * args) {
   unsigned int high;
   uint64_t abspos;
   if (!PyArg_ParseTuple(args, "Ik:mappability low_high", &high, &abspos))
     return nullptr;
-  return PyInt_FromLong(self->data->low_high(high, abspos - 1));
+  return PyLong_FromLong(self->data->low_high(high, abspos - 1));
 }
 
 static PyObject * mappability_repr(Mappability * self) {
-  return PyString_FromFormat("Mappability object for reference %s",
-                             PyString_AsString(self->fasta_file));
+  return PyUnicode_FromFormat("Mappability object for reference %s",
+                             PyUnicode_AsUTF8(self->fasta_file));
 }
 
 static PyMethodDef mappability_methods[] = {
@@ -1653,13 +1672,12 @@ Meaning of mappability values:
 )STR";
 
 static PyTypeObject mappabilityType = {
-  PyObject_HEAD_INIT(nullptr)
-  0,                                        /* ob_size */
+  PyVarObject_HEAD_INIT(nullptr,0)
   "mumdex.Mappability",                     /* tp_name */
   sizeof(Mappability),                      /* tp_basicsize */
   0,                                        /* tp_itemsize */
   (destructor)mappability_dealloc,          /* tp_dealloc */
-  nullptr,                                  /* tp_print */
+  0,                                        /* tp_vectorcall_offset */
   nullptr,                                  /* tp_getattr */
   nullptr,                                  /* tp_setattr */
   nullptr,                                  /* tp_compare */
@@ -1701,6 +1719,8 @@ static PyTypeObject mappabilityType = {
   nullptr,                                  /* tp_weaklist */
   nullptr,                                  /* tp_del */
   0,                                        /* tp_version_tag */
+  nullptr,                                  /* tp_finalize */
+  nullptr,                                  /* tp_vectorcall */
 };
 
 //
@@ -1728,7 +1748,7 @@ static PyObject * mapper_new(PyTypeObject * type, PyObject * args,
   Mapper * self = reinterpret_cast<Mapper *>(type->tp_alloc(type, 0));
   if (self != nullptr) {
     // Set object fields
-    self->fasta_file = PyString_FromString(fasta_file);
+    self->fasta_file = PyUnicode_FromString(fasta_file);
     try {
       self->data = new paa::Mapper(fasta_file);
       // std::cerr << self->data << std::endl;
@@ -1749,7 +1769,7 @@ static void mapper_dealloc(Mapper * self) {
   // std::cerr << "delete data" << std::endl;
   if (self->data != nullptr) delete self->data;
   // std::cerr << "free self" << std::endl;
-  self->ob_type->tp_free(reinterpret_cast<PyObject *>(self));
+  Py_TYPE(self)->tp_free(reinterpret_cast<PyObject *>(self));
   // std::cerr << "done free self" << std::endl;
 }
 
@@ -1761,7 +1781,7 @@ static PyObject * mapper_fasta(Mapper * self) {
 static PyObject * mapper_mams(Mapper * self,
                               PyObject * sequence) {
   try {
-    const auto mams = self->data->sa().find_mams(PyString_AsString(sequence));
+    const auto mams = self->data->sa().find_mams(PyUnicode_AsUTF8(sequence));
 
     PyObject * py_mams = PyList_New(mams.size());
     for (unsigned int i = 0; i != mams.size(); ++i) {
@@ -1774,7 +1794,7 @@ static PyObject * mapper_mams(Mapper * self,
     }
     return py_mams;
   } catch (std::exception & e) {
-    self->ob_type->tp_free(reinterpret_cast<PyObject *>(self));
+    Py_TYPE(self)->tp_free(reinterpret_cast<PyObject *>(self));
     PyErr_SetString(PyExc_RuntimeError,
                     (std::string("mumdex.Mapper.mams(): ") +
                      e.what()).c_str());
@@ -1790,8 +1810,8 @@ static PyObject * mapper_create_mumdex(Mapper * self, PyObject * args) {
     return nullptr;
 
   std::vector<std::string> sams;
-  if (PyString_Check(sam)) {
-    sams.push_back(PyString_AsString(sam));
+  if (PyUnicode_Check(sam)) {
+    sams.push_back(PyUnicode_AsUTF8(sam));
   } else {
     PyErr_SetString(PyExc_RuntimeError,
                     (std::string("mumdex.Mapper.create_mumdex(): ") +
@@ -1804,7 +1824,7 @@ static PyObject * mapper_create_mumdex(Mapper * self, PyObject * args) {
     self->data->create_mumdex(sams, mumdex_name);
     // std::cerr << "Done create mumdex " << mumdex_name << std::endl;
   } catch (std::exception & e) {
-    // self->ob_type->tp_free(reinterpret_cast<PyObject *>(self));
+    // self->ob_base->tp_free(reinterpret_cast<PyObject *>(self));
     PyErr_SetString(PyExc_RuntimeError,
                     (std::string("mumdex.Mapper.create_mumdex(): ") +
                      e.what()).c_str());
@@ -1821,8 +1841,8 @@ static PyObject * mapper_mam_fields(Mapper * self) {
 }
 
 static PyObject * mapper_repr(Mapper * self) {
-  return PyString_FromFormat("Mapper object loaded from %s",
-                             PyString_AsString(self->fasta_file));
+  return PyUnicode_FromFormat("Mapper object loaded from %s",
+                             PyUnicode_AsUTF8(self->fasta_file));
 }
 
 static PyMethodDef mapper_methods[] = {
@@ -1864,13 +1884,12 @@ Constructors:
 )STR";
 
 static PyTypeObject mapperType = {
-  PyObject_HEAD_INIT(nullptr)
-  0,                                        /* ob_size */
+  PyVarObject_HEAD_INIT(nullptr,0)
   "mumdex.Mapper",                          /* tp_name */
   sizeof(Mapper),                           /* tp_basicsize */
   0,                                        /* tp_itemsize */
   (destructor)mapper_dealloc,               /* tp_dealloc */
-  nullptr,                                  /* tp_print */
+  0,                                        /* tp_vectorcall_offset */
   nullptr,                                  /* tp_getattr */
   nullptr,                                  /* tp_setattr */
   nullptr,                                  /* tp_compare */
@@ -1912,6 +1931,8 @@ static PyTypeObject mapperType = {
   nullptr,                                  /* tp_weaklist */
   nullptr,                                  /* tp_del */
   0,                                        /* tp_version_tag */
+  nullptr,                                  /* tp_finalize */
+  nullptr,                                  /* tp_vectorcall */
 };
 
 //
@@ -1927,49 +1948,68 @@ static PyMethodDef module_methods[] = {
 #define PyMODINIT_FUNC void
 #endif
 
+static struct PyModuleDef mumdex_definition {
+  PyModuleDef_HEAD_INIT,
+    "_mumdex",
+    "MUMdex extension types.",
+    -1,
+    module_methods
+};
+
 extern "C" {
-  PyMODINIT_FUNC init_mumdex(void) {
+  PyMODINIT_FUNC PyInit__mumdex(void) {
+    Py_Initialize();
+    //PyObject * m =
+    //    PyModule_Create("_mumdex", module_methods, "MUMdex extension types.");
     PyObject * m =
-        Py_InitModule3("_mumdex", module_methods, "MUMdex extension types.");
+      PyModule_Create(&mumdex_definition);
+    if (m == nullptr) return nullptr;
 
-    if (m == nullptr) return;
-
-    if (PyType_Ready(&pairType) < 0) return;
-    ++pairType.ob_refcnt;  // replaces Py_INCREF(&pairType)
+    if (PyType_Ready(&pairType) < 0) return nullptr;
+    Py_INCREF(&pairType);
+    //++pairType.ob_refcnt;  // replaces Py_INCREF(&pairType)
     PyModule_AddObject(m, "Pair", reinterpret_cast<PyObject *>(&pairType));
 
-    if (PyType_Ready(&mumType) < 0) return;
-    ++mumType.ob_refcnt;  // replaces Py_INCREF(&mumType)
+    if (PyType_Ready(&mumType) < 0) return nullptr;
+    Py_INCREF(&mumType);
+    //++mumType.ob_refcnt;  // replaces Py_INCREF(&mumType)
     PyModule_AddObject(m, "MUM", reinterpret_cast<PyObject *>(&mumType));
 
-    if (PyType_Ready(&referenceType) < 0) return;
-    ++referenceType.ob_refcnt;  // replaces Py_INCREF(&referenceType)
+    if (PyType_Ready(&referenceType) < 0) return nullptr;
+    Py_INCREF(&referenceType);
+    //++referenceType.ob_refcnt;  // replaces Py_INCREF(&referenceType)
     PyModule_AddObject(m, "Reference",
                        reinterpret_cast<PyObject *>(&referenceType));
 
-    if (PyType_Ready(&mumdexType) < 0) return;
-    ++mumdexType.ob_refcnt;  // replaces Py_INCREF(&mumdexType)
+    if (PyType_Ready(&mumdexType) < 0) return nullptr;
+    Py_INCREF(&mumdexType);
+    //++mumdexType.ob_refcnt;  // replaces Py_INCREF(&mumdexType)
     PyModule_AddObject(m, "MUMdex",
                        reinterpret_cast<PyObject *>(&mumdexType));
 
-    if (PyType_Ready(&countsType) < 0) return;
-    ++countsType.ob_refcnt;  // replaces Py_INCREF(&countsType)
+    if (PyType_Ready(&countsType) < 0) return nullptr;
+    Py_INCREF(&countsType);
+    //++countsType.ob_refcnt;  // replaces Py_INCREF(&countsType)
     PyModule_AddObject(m, "Counts", reinterpret_cast<PyObject *>(&countsType));
 
-    if (PyType_Ready(&populationType) < 0) return;
-    ++populationType.ob_refcnt;  // replaces Py_INCREF(&populationType)
+    if (PyType_Ready(&populationType) < 0) return nullptr;
+    Py_INCREF(&populationType);
+    //++populationType.ob_refcnt;  // replaces Py_INCREF(&populationType)
     PyModule_AddObject(m, "Population",
                        reinterpret_cast<PyObject *>(&populationType));
 
-    if (PyType_Ready(&mappabilityType) < 0) return;
-    ++mappabilityType.ob_refcnt;  // replaces Py_INCREF(&mappabilityType)
+    if (PyType_Ready(&mappabilityType) < 0) return nullptr;
+    Py_INCREF(&mappabilityType);
+    //++mappabilityType.ob_refcnt;  // replaces Py_INCREF(&mappabilityType)
     PyModule_AddObject(m, "Mappability",
                        reinterpret_cast<PyObject *>(&mappabilityType));
 
-    if (PyType_Ready(&mapperType) < 0) return;
-    ++mapperType.ob_refcnt;  // replaces Py_INCREF(&mapperType)
+    if (PyType_Ready(&mapperType) < 0) return nullptr;
+    Py_INCREF(&mapperType);
+    //++mapperType.ob_refcnt;  // replaces Py_INCREF(&mapperType)
     PyModule_AddObject(m, "Mapper",
                        reinterpret_cast<PyObject *>(&mapperType));
+    return m;
   }
 }
 
@@ -1987,19 +2027,19 @@ static PyObject * reference_new(PyTypeObject * type, PyObject * args,
   Reference * self = reinterpret_cast<Reference *>(type->tp_alloc(type, 0));
   if (self != nullptr) {
     try {
-      if (PyString_Check(arg)) {
+      if (PyUnicode_Check(arg)) {
         Py_INCREF(arg);
         self->fasta = arg;
-        self->data = new paa::Reference(PyString_AsString(self->fasta));
+        self->data = new paa::Reference(PyUnicode_AsUTF8(self->fasta));
       } else {
         self->own_data = false;
         const auto * mumdex = &*reinterpret_cast<MUMdex *>(arg);
         self->data = &mumdex->data->reference();
-        self->fasta = PyString_FromString(
-            paa::saved_ref_name(PyString_AsString(mumdex->directory)).c_str());
+        self->fasta = PyUnicode_FromString(
+            paa::saved_ref_name(PyUnicode_AsUTF8(mumdex->directory)).c_str());
       }
     } catch (std::exception & e) {
-      self->ob_type->tp_free(reinterpret_cast<PyObject *>(self));
+      Py_TYPE(self)->tp_free(reinterpret_cast<PyObject *>(self));
       PyErr_SetString(PyExc_RuntimeError,
                       (std::string("mumdex.reference.new(): ") +
                        e.what()).c_str());
@@ -2009,7 +2049,7 @@ static PyObject * reference_new(PyTypeObject * type, PyObject * args,
     try {
       self->lookup = new paa::ChromosomeIndexLookup(*self->data);
     } catch (std::exception & e) {
-      self->ob_type->tp_free(reinterpret_cast<PyObject *>(self));
+      Py_TYPE(self)->tp_free(reinterpret_cast<PyObject *>(self));
       PyErr_SetString(PyExc_RuntimeError,
                       (std::string("mumdex.reference.new() "
                                    "ChromosomeIndexLookup: ") +

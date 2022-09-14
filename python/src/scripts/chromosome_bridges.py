@@ -1,4 +1,4 @@
-#! /bin/env python
+#! /usr/bin/env python
 
 # Copyright 2016 Peter Andrews @ CSHL
 
@@ -9,7 +9,7 @@ import mumdex
 import signal
 
 def handler(signum, frame):
-    print >> sys.stderr, "pipe closed in bridge_finder.py"
+    print("pipe closed in bridge_finder.py", file=sys.stderr)
     sys.exit(1)
 signal.signal(signal.SIGPIPE, handler)
 
@@ -35,8 +35,7 @@ if len(sys.argv) == 3 or len(sys.argv) == 4 or len(sys.argv) == 5:
     else:
         stop_pos = ref.length(chromosome_index) + 1        
 else:
-    print >> sys.stderr, \
-        "usage: chromosome_bridges.py mumdex chromosome [start_pos] [stop_pos]"
+    print("usage: chromosome_bridges.py mumdex chromosome [start_pos] [stop_pos]", file=sys.stderr)
     exit(1)
 
 # settings
@@ -46,26 +45,26 @@ min_length = 40
 output_no_bridge_positions = False
 
 #output
-print "chr pos inout map Ac Al ichr ityp inv abc al bl amc aml bmc bml asc asl bsc bsl"
-for pos in xrange(start_pos, stop_pos):
+print("chr pos inout map Ac Al ichr ityp inv abc al bl amc aml bmc bml asc asl bsc bsl")
+for pos in range(start_pos, stop_pos):
     for out in range(0, 2):
         (anchor_counts, bridges) = \
             mums.bridges(chromosome_index, pos, bool(out))
 
-        for (invariant, bridge_counts) in bridges.items():
+        for (invariant, bridge_counts) in list(bridges.items()):
             if (not filter_bridges) or (bridge_counts["abc"] > min_count and \
                             bridge_counts["bs"] > min_length and \
                             bridge_counts["as"] > min_length and \
                             bridge_counts["bms"] > min_length and \
                             bridge_counts["ams"] > min_length):
-                print chromosome, pos, out, mappa.inout(out, offset + pos),
-                print "{ac} {al}".format(**anchor_counts),
-                print ref.name(invariant[0]), invariant[1], invariant[2],
-                print "{abc} {al} {bl} {amc} {ams} {bmc} {bms} {asc} {as} {bsc} {bs}".format(**bridge_counts)
+                print(chromosome, pos, out, mappa.inout(out, offset + pos), end=' ')
+                print("{ac} {al}".format(**anchor_counts), end=' ')
+                print(ref.name(invariant[0]), invariant[1], invariant[2], end=' ')
+                print("{abc} {al} {bl} {amc} {ams} {bmc} {bms} {asc} {as} {bsc} {bs}".format(**bridge_counts))
 
         if output_no_bridge_positions and len(bridges) == 0:
-            print chromosome, pos, out, mappa.inout(out, offset + pos),
-            print "{ac} {al}".format(**anchor_counts)
+            print(chromosome, pos, out, mappa.inout(out, offset + pos), end=' ')
+            print("{ac} {al}".format(**anchor_counts))
                 
 exit()
 
