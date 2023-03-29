@@ -71,12 +71,12 @@ static PyObject * pair_dupe(ReadPair * self) {
 
 static PyObject * pair_length(ReadPair * self, PyObject * read_index) {
   return PyLong_FromLong(self->data->length(
-      static_cast<unsigned int>(PyLong_AS_LONG(read_index))));
+      static_cast<unsigned int>(PyLong_AsLong(read_index))));
 }
 
 static PyObject * pair_bad(ReadPair * self, PyObject * read_index) {
   return PyBool_FromLong(self->data->bad(
-      static_cast<unsigned int>(PyLong_AS_LONG(read_index))));
+      static_cast<unsigned int>(PyLong_AsLong(read_index))));
 }
 
 static PyObject * pair_repr(ReadPair * self) {
